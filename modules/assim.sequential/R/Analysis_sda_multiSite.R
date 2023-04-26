@@ -269,8 +269,8 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
 
   #### initial conditions
   ## we only calculate aqq and bqq when t=1.
-  if (t == 1) {
-    bqq[1] <- length(elements.W.Data)
+  if (t == 1 | is.null(aqq)) {
+    bqq[t] <- length(elements.W.Data)
     if (is.null(aqq)) {
       if (q.type==Site.q) { # if we wanna estimate a q per site
         aqq <-
