@@ -95,6 +95,7 @@ SDA_timeseries_plot(
   obs.mean,
   obs.cov,
   outdir,
+  pft.path = NULL,
   by = "site",
   CI = c(0.025, 0.975),
   unit = list(AbvGrndWood = "Mg/ha", LAI = "m2/m2", SoilMoistFrac = "", TotSoilCarb =

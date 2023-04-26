@@ -846,7 +846,7 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
 
 ##' @rdname interactive.plotting.sda
 ##' @export
-SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, by = "site", CI = c(0.025, 0.975), 
+SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, pft.path = NULL, by = "site", CI = c(0.025, 0.975), 
                                 unit = list(AbvGrndWood = "Mg/ha", LAI = "m2/m2", SoilMoistFrac = "", TotSoilCarb = "kg/m2")){
   time_points <- names(FORECAST)
   site_ids <- attributes(FORECAST[[1]])$Site
@@ -859,6 +859,10 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, b
     }else if (length(vector)==1){
       return(vector)
     }
+  }
+  #read pft.csv file for the option by == pft.
+  if(!is.null(pft.path)){
+    pft <- read.csv(pft.path)
   }
   #create database
   DB <- data.frame()
@@ -891,6 +895,7 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, b
       }
     }
   }
+  #if we plot by each site.
   if(by == "site") {
     PDF_w <- 10
     PDF_h <- 8
@@ -912,6 +917,7 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, b
       p <- rlist::list.append(p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = site_p, common.legend = TRUE), 
                                                  top = ggpubr::text_grob(site.id, color = "red", face = "bold", size = 14)))
     }
+    #if we plot by each state variable
   } else if (by == "var") {
     PDF_w <- 20
     PDF_h <- 16
@@ -933,6 +939,37 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, b
       }
       p <- rlist::list.append(p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = var_p, common.legend = TRUE), 
                                                          top = ggpubr::text_grob(var.name, color = "red", face = "bold", size = 14)))
+    }
+    #if we plot by each (pft * state variable)
+  } else if (by == "pft") {
+    if (!exists("pft")) {
+      PEcAn.logger::logger.info("Please provide the pdf path!")
+      return(0)
+    } else {
+      p <- list()
+      for (PFT in sort(unique(pft$pft))) {
+        site_id_pft <- pft$site[which(pft$pft == PFT)]
+        var_p <- list()
+        for (var.name in sort(unique(var_names))) {
+          site_p <- list()
+          for (site.id in sort(site_id_pft)) {
+            site_p <- rlist::list.append(site_p, dplyr::filter(DB, id == site.id & var_name == var.name) %>% 
+                                           dplyr::select(-c(id, var_name)) %>%
+                                           dplyr::mutate(date = lubridate::ymd(date)) %>%
+                                           ggplot2::ggplot(aes(x=date)) +
+                                           geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill=type), inherit.aes = FALSE, alpha = 0.5) +
+                                           geom_line(aes(y=mean, color=type),lwd=0.5,linetype=2) +
+                                           geom_point(aes(y=mean, color=type), size=1.5, alpha=0.75) +
+                                           scale_fill_manual(values = c("FORECAST" = "yellow", "ANALYSIS" = "green", "OBS" = "grey")) +
+                                           scale_color_manual(values = c("FORECAST" = "blue", "ANALYSIS" = "red", "OBS" = "black")) +
+                                           ylab(paste0(var.name, " (", unit[var.name], ")")) +
+                                           ggtitle(site.id))
+          }
+          var_p <- rlist::list.append(var_p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = site_p, common.legend = TRUE), 
+                                                                     top = ggpubr::text_grob(paste(PFT, var.name), color = "red", face = "bold", size = 14)))
+        }
+        p <- rlist::list.append(p, var_p)
+      }
     }
   }
   #print pdf
