@@ -426,6 +426,7 @@ sda.enkf.multisite <- function(settings,
         #------------- Reading - every iteration and for SDA
         
         #put building of X into a function that gets called
+        max_t <- 0
         while (is.character(try(reads <- PEcAnAssimSequential:::build_X(out.configs = out.configs, 
                                                                         settings = settings, 
                                                                         new.params = new.params, 
@@ -436,7 +437,12 @@ sda.enkf.multisite <- function(settings,
                                                                         var.names = var.names, 
                                                                         my.read_restart = my.read_restart,
                                                                         restart_flag = restart_flag), silent = T))) {
-          Sys.sleep(5)
+          Sys.sleep(10)
+          max_t <- max_t + 1
+          if(max_t > 100){
+            PEcAn.logger::logger.info("Can't find outputed NC file! Please rerun the code!")
+            break
+          }
           PEcAn.logger::logger.info("Empty folder, try again!")
         }
         
@@ -693,17 +699,8 @@ sda.enkf.multisite <- function(settings,
       tictoc::tic(paste0("Visulization for cycle = ", t))
       
       #writing down the image - either you asked for it or nor :)
-      if ((t%%2 == 0 | t == nt) & (control$TimeseriesPlot) & !is.null(obs.mean[[t]][[1]])){
-        post.analysis.multisite.ggplot(settings, 
-                                       t, 
-                                       obs.times, 
-                                       obs.mean, 
-                                       obs.cov, 
-                                       FORECAST, 
-                                       ANALYSIS ,
-                                       plot.title=control$plot.title, 
-                                       facetg=control$facet.plots, 
-                                       readsFF=readsFF)
+      if ((t%%2 == 0 | t == nt) & (control$TimeseriesPlot)){
+        SDA_timeseries_plot(ANALYSIS, FORECAST, obs.mean, obs.cov, settings$outdir, by = "var")
       }   
       #Saving the profiling result
       if (control$Profiling) alltocs(file.path(settings$outdir,"SDA", "Profiling.csv"))
