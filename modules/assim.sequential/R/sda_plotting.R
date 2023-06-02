@@ -846,7 +846,7 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
 
 ##' @rdname interactive.plotting.sda
 ##' @export
-SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, pft.path = NULL, by = "site", CI = c(0.025, 0.975), 
+SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = NULL, outdir, pft.path = NULL, by = "site", types = c("FORECAST", "ANALYSIS", "OBS"), CI = c(0.025, 0.975), 
                                 unit = list(AbvGrndWood = "Mg/ha", LAI = "m2/m2", SoilMoistFrac = "", TotSoilCarb = "kg/m2"),
                                 style = list(general_color = c("FORECAST" = "blue", "ANALYSIS" = "red", "OBS" = "black"),
                                              fill_color = c("FORECAST" = "yellow", "ANALYSIS" = "green", "OBS" = "grey"),
@@ -855,7 +855,7 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean, obs.cov, outdir, p
   time_points <- names(FORECAST)
   site_ids <- attributes(FORECAST[[1]])$Site
   var_names <- attributes(FORECAST[[1]])$dimnames[[2]]
-  types <- c("FORECAST", "ANALYSIS", "OBS")
+  
   #new diag function: fixed the bug when length==1 then it will return 0x0 matrix
   diag_fix <- function(vector){
     if (length(vector)>1){
