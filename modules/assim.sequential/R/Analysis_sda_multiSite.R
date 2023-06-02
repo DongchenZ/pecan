@@ -265,6 +265,7 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
   elements.W.Data <- which(apply(H, 2, sum) == 1)
   if (exists('blocked.dis') & is.null(extraArg$Pf)){
     Pf <- Local.support(Pf, blocked.dis, settings$state.data.assimilation$scalef %>% as.numeric())
+    # Pf <- diag(diag(Pf))
   }
 
   #### initial conditions
@@ -355,15 +356,16 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
   if(t == 1 | recompileGEF){ #TO DO need to make something that works to pick whether to compile or not
   # initial Q depends on the size of aqq
     #Initial values
+    init_muf <- Forecast$X[1,]
     inits.pred <-
       list(
-        X.mod = as.vector(mu.f),
-        X = as.vector(mu.f)[elements.W.Data],
-        Xall = as.vector(mu.f),
-        Xs = as.vector(mu.f)[elements.W.Data],
+        X.mod = as.vector(init_muf),
+        X = as.vector(init_muf)[elements.W.Data],
+        Xall = as.vector(init_muf),
+        Xs = as.vector(init_muf)[elements.W.Data],
         q = diag(1, length(elements.W.Data), length(elements.W.Data))
       ) #
-    dimensions.tobit = list(X = length(elements.W.Data),
+    dimensions.tobit <- list(X = length(elements.W.Data),
                             X.mod = ncol(X),
                             Q = c(nrow(aqq), ncol(aqq))
     )
@@ -414,14 +416,14 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
                                 data = data.tobit,
                                 dimensions = dimensions.tobit,
                                 constants = constants.tobit,
-                                inits = inits.pred,
+                                # inits = inits.pred,
                                 name = 'base')
     }
     model_pred$initializeInfo()
     ## Adding X.mod,q,r as data for building model.
     conf <- configureMCMC(model_pred, print=TRUE)
     
-    conf$addMonitors(c("X","Xall","q","Xs")) 
+    conf$addMonitors(c("Xall", "X.mod","qq")) 
     samplerNumberOffset <<- length(conf$getSamplers())
     
       for(i in 1:length(y.ind)) {
@@ -475,9 +477,18 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
       ## indicator variable is set to 0, which specifies *not* to sample
       valueInCompiledNimbleFunction(Cmcmc$samplerFunctions[[samplerNumberOffset+i]], 'toggle', 1-y.ind[i])
     }
-    
   }
-  dat <- runMCMC(Cmcmc, niter = nitr.GEF, nburnin = nburnin, thin = nthin, nchains = 1)
+  
+  inits <- function(){
+    ind <- sample(1:50, 1)
+    init_muf <- Forecast$X[ind,]
+    list(X.mod = as.vector(init_muf), 
+         X = as.vector(init_muf)[elements.W.Data], 
+         Xall = as.vector(init_muf),
+         Xs = as.vector(init_muf)[elements.W.Data],
+         q = diag(1, length(elements.W.Data), length(elements.W.Data)))
+  }
+  dat <- runMCMC(Cmcmc, niter = nitr.GEF, nburnin = nburnin, thin = nthin, nchains = 10, inits = inits)
   
   #---- Saving the chains
   save(dat, file=file.path(settings$outdir, paste0('dat',t,'.Rdata')))
