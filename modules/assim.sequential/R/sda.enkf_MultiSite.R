@@ -44,7 +44,8 @@ sda.enkf.multisite <- function(settings,
                                             debug = FALSE,
                                             pause = FALSE,
                                             Profiling = FALSE,
-                                            OutlierDetection=FALSE),
+                                            OutlierDetection=FALSE,
+                                            free_run = FALSE),
                                ...) {
   #add if/else for when restart points to folder instead if T/F set restart as T
   if(is.list(restart)){
@@ -479,7 +480,7 @@ sda.enkf.multisite <- function(settings,
       ###-------------------------------------------------------------------###
       ###  preparing OBS                                                    ###
       ###-------------------------------------------------------------------###---- 
-      if (!is.null(obs.mean[[t]][[1]])) {
+      if (!is.null(obs.mean[[t]][[1]]) & !control$free_run) {
         if (control$debug) browser()
         #Making R and Y
         Obs.cons <- Construct.R(site.ids, var.names, obs.mean[[t]], obs.cov[[t]])
@@ -699,8 +700,8 @@ sda.enkf.multisite <- function(settings,
       tictoc::tic(paste0("Visulization for cycle = ", t))
       
       #writing down the image - either you asked for it or nor :)
-      if ((t%%2 == 0 | t == nt) & (control$TimeseriesPlot)){
-        SDA_timeseries_plot(ANALYSIS, FORECAST, obs.mean, obs.cov, settings$outdir, by = "var")
+      if (control$TimeseriesPlot){
+        SDA_timeseries_plot(ANALYSIS, FORECAST, obs.mean, obs.cov, settings$outdir, by = "var", types = c("FORECAST", "ANALYSIS", "OBS"))
       }   
       #Saving the profiling result
       if (control$Profiling) alltocs(file.path(settings$outdir,"SDA", "Profiling.csv"))
