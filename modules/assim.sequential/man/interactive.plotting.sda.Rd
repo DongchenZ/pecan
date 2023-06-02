@@ -92,11 +92,12 @@ post.analysis.multisite.ggplot(
 SDA_timeseries_plot(
   ANALYSIS,
   FORECAST,
-  obs.mean,
-  obs.cov,
+  obs.mean = NULL,
+  obs.cov = NULL,
   outdir,
   pft.path = NULL,
   by = "site",
+  types = c("FORECAST", "ANALYSIS", "OBS"),
   CI = c(0.025, 0.975),
   unit = list(AbvGrndWood = "Mg/ha", LAI = "m2/m2", SoilMoistFrac = "", TotSoilCarb =
     "kg/m2"),
