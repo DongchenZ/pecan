@@ -15,7 +15,7 @@
 ##' 
 ##' @return It returns a list with estimated mean and cov matrix of forecast state variables as well as mean and cov estimated as a result of assimilation/analysis .
 ##' @export
-EnKF.MultiSite <-function(settings, Forecast, Observed, H, extraArg=NULL, ...){
+EnKF.MultiSite <- function(settings, Forecast, Observed, H, extraArg=NULL, ...){
   #------------------------------Setup
   Localization.FUN <- settings$state.data.assimilation$Localization.FUN # localization function
   scalef <- settings$state.data.assimilation$scalef %>% as.numeric() # scale factor for localization
@@ -25,14 +25,14 @@ EnKF.MultiSite <-function(settings, Forecast, Observed, H, extraArg=NULL, ...){
   dots<-list(...)
   if (length(dots)>0) lapply(names(dots),function(name){assign(name,dots[[name]])})
   for(i in seq_along(dots)) assign(names(dots)[i],dots[[names(dots)[i]]])
-
-    #Forcast inputs 
+  
+  #Forcast inputs 
   Q <- Forecast$Q # process error
   X <- Forecast$X # states 
   #Observed inputs
   R <- Observed$R
   Y <- Observed$Y
-
+  
   # Enkf---------------------------------------------------
   mu.f <- as.numeric(apply(X, 2, mean, na.rm = TRUE)) %>%
     `attr<-`('Site', c(rep(site.ids, each=length(var.names))))
@@ -72,7 +72,7 @@ EnKF.MultiSite <-function(settings, Forecast, Observed, H, extraArg=NULL, ...){
 
 ##' @rdname GEF
 ##' @export
-GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
+GEF.MultiSite <- function(settings, Forecast, Observed, H, extraArg,...){
   #-- reading the dots and exposing them to the inside of the function
   dots<-list(...)
   if (length(dots) > 0) lapply(names(dots),function(name){assign(name,dots[[name]], pos = 1 )})
@@ -249,8 +249,8 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
       colMeans(dat.tobit2space[, grep("muf", colnames(dat.tobit2space))])
     Pf <-
       matrix(colMeans(dat.tobit2space[, grep("pf", colnames(dat.tobit2space))]), ncol(X), ncol(X))
-
-
+    
+    
     
     iycens <- grep("y.censored", colnames(dat.tobit2space))
     X.new <-
@@ -265,13 +265,12 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
   elements.W.Data <- which(apply(H, 2, sum) == 1)
   if (exists('blocked.dis') & is.null(extraArg$Pf)){
     Pf <- Local.support(Pf, blocked.dis, settings$state.data.assimilation$scalef %>% as.numeric())
-    # Pf <- diag(diag(Pf))
   }
-
+  
   #### initial conditions
   ## we only calculate aqq and bqq when t=1.
-  if (t == 1 | is.null(aqq)) {
-    bqq[t] <- length(elements.W.Data)
+  if (t == 1) {
+    bqq[1] <- length(elements.W.Data)
     if (is.null(aqq)) {
       if (q.type==Site.q) { # if we wanna estimate a q per site
         aqq <-
@@ -307,15 +306,15 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
     }
   } else{
     # if(length(elements.W.Data)==ncol(aqq[, , t])){
-      if (ncol(aqq) > 1 & nrow(aqq) > 1)
-        aqq[, , t] <- Local.support(
-          aqq[, , t],
-          distances[ceiling(elements.W.Data/length(var.names)), # finding sites with data
-                    ceiling(elements.W.Data/length(var.names))],
-          settings$state.data.assimilation$scalef %>% as.numeric()
-        )
-      }
-
+    if (ncol(aqq) > 1 & nrow(aqq) > 1)
+      aqq[, , t] <- Local.support(
+        aqq[, , t],
+        distances[ceiling(elements.W.Data/length(var.names)), # finding sites with data
+                  ceiling(elements.W.Data/length(var.names))],
+        settings$state.data.assimilation$scalef %>% as.numeric()
+      )
+  }
+  
   ### create matrix the describes the support for each observed state variable at time t
   interval <- matrix(NA, length(unlist(obs.mean[[t]])), 2)
   
@@ -347,148 +346,22 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
   #### from the interval matrix
   y.ind <- as.numeric(Y > interval[, 1])
   y.censored <- as.numeric(ifelse(Y > interval[, 1], Y, 0))
-  recompileGEF <- extraArg$recompileGEF
-  if(t > 1){
-    if(length(extraArg$pre_elements) != length(elements.W.Data)){
-      recompileGEF <- TRUE
-    }
-  } 
-  if(t == 1 | recompileGEF){ #TO DO need to make something that works to pick whether to compile or not
-  # initial Q depends on the size of aqq
-    #Initial values
-    init_muf <- Forecast$X[1,]
-    inits.pred <-
-      list(
-        X.mod = as.vector(init_muf),
-        X = as.vector(init_muf)[elements.W.Data],
-        Xall = as.vector(init_muf),
-        Xs = as.vector(init_muf)[elements.W.Data],
-        q = diag(1, length(elements.W.Data), length(elements.W.Data))
-      ) #
-    dimensions.tobit <- list(X = length(elements.W.Data),
-                            X.mod = ncol(X),
-                            Q = c(nrow(aqq), ncol(aqq))
-    )
-    # Contants defined in the model
-    constants.tobit <-
-      list(
-        N = ncol(X),
-        YN = length(elements.W.Data),
-        nH = length(elements.W.Data),
-        H = elements.W.Data,
-        NotH = which(!(1:ncol(X) %in% elements.W.Data )),
-        nNotH = which(!(1:ncol(X) %in% elements.W.Data )) %>% length(),
-        q.type=q.type
-      )
-    # Data used for setting the likelihood and other stuff
-    data.tobit <-
-      list(
-        muf = as.vector(mu.f),
-        pf = Pf,
-        aq = aqq[,,t],
-        bq = bqq[t],
-        y.ind = y.ind,
-        y.censored = y.censored,
-        r = solve(R)
-      )
-
-  # This is the first step in making the nimble model - Nimble does some preliminary checks on the code 
-    #special case for YN == 1 to run nimble model without for loops around nH
-    if(constants.tobit$YN == 1){
-      #add error message if trying to run SDA with 1 obs and 1 state variable no model currently exists to handle this case, need to remove for loop from GEF_singleobs_nimble for this case and save new model
-      if(constants.tobit$N == 1){
-        PEcAn.logger::logger.error("No model exists for assimilating 1 observation and 1 state variable, add more state variables or edit GEF_singleobs_nimble to work with 1 state variable")
-      }
-      #slight adjustment to inputs for nimble function when running with 1 obs
-      inits.pred$qq <- 0.368
-      dimensions.tobit$y.censored <- 1
-      dimensions.tobit$y.ind <- 1
-      constants.tobit$q.type <- NULL
-      
-      model_pred <- nimbleModel(GEF_singleobs_nimble,
-                                data = data.tobit,
-                                dimensions = dimensions.tobit,
-                                constants = constants.tobit,
-                                inits = inits.pred,
-                                name = 'base')
-    }else{
-      model_pred <- nimbleModel(GEF.MultiSite.Nimble,
-                                data = data.tobit,
-                                dimensions = dimensions.tobit,
-                                constants = constants.tobit,
-                                # inits = inits.pred,
-                                name = 'base')
-    }
-    model_pred$initializeInfo()
-    ## Adding X.mod,q,r as data for building model.
-    conf <- configureMCMC(model_pred, print=TRUE)
-    
-    conf$addMonitors(c("Xall", "X.mod","qq")) 
-    samplerNumberOffset <<- length(conf$getSamplers())
-    
-      for(i in 1:length(y.ind)) {
-        node <- paste0('y.censored[',i,']')
-        conf$addSampler(node, 'toggle', control=list(type='RW'))
-      }
-
-    conf$printSamplers()
-    Rmcmc <<- buildMCMC(conf)
-    Cmodel <<- compileNimble(model_pred)
-    Cmcmc <<- compileNimble(Rmcmc, project = model_pred, showCompilerOutput = TRUE)
-    
-    for(i in 1:length(y.ind)) {
-        valueInCompiledNimbleFunction(Cmcmc$samplerFunctions[[samplerNumberOffset+i]], 'toggle', 1-y.ind[i])
-      }
-    save(
-      inits.pred,
-      dimensions.tobit,
-      constants.tobit,
-      data.tobit,
-      model_pred,
-      conf,
-      Rmcmc,
-      Cmodel,
-      Cmcmc,
-      file = file.path(settings$outdir,"NimbleVars.RData")
-    )
-    # if t>1 in GEF --------------------------------------------   
-  } else {
-
-    Cmodel$y.ind <- y.ind
-    Cmodel$y.censored <- y.censored
-    Cmodel$aq <- aqq[ , ,t]
-    Cmodel$bq <- bqq[t]
-    Cmodel$muf <- mu.f
-    Cmodel$pf <- Pf
-    Cmodel$r <- solve(R)
-    inits.pred <-
-      list(
-        X.mod = as.vector(mu.f),
-        X = as.vector(mu.f)[elements.W.Data],
-        Xall = as.vector(mu.f),
-        Xs = as.vector(mu.f)[elements.W.Data],
-        q = diag(1, length(elements.W.Data), length(elements.W.Data))
-      ) #
-    Cmodel$setInits(inits.pred)
-    
-    for(i in 1:length(y.ind)) {
-      ## ironically, here we have to "toggle" the value of y.ind[i]
-      ## this specifies that when y.ind[i] = 1,
-      ## indicator variable is set to 0, which specifies *not* to sample
-      valueInCompiledNimbleFunction(Cmcmc$samplerFunctions[[samplerNumberOffset+i]], 'toggle', 1-y.ind[i])
-    }
-  }
-  
-  inits <- function(){
-    ind <- sample(1:50, 1)
-    init_muf <- Forecast$X[ind,]
-    list(X.mod = as.vector(init_muf), 
-         X = as.vector(init_muf)[elements.W.Data], 
-         Xall = as.vector(init_muf),
-         Xs = as.vector(init_muf)[elements.W.Data],
-         q = diag(1, length(elements.W.Data), length(elements.W.Data)))
-  }
-  dat <- runMCMC(Cmcmc, niter = nitr.GEF, nburnin = nburnin, thin = nthin, nchains = 10, inits = inits)
+  data <- list(elements.W.Data = elements.W.Data,
+               X = X,
+               Pf = Pf,
+               aqq = aqq,
+               bqq = bqq,
+               mu.f = mu.f,
+               q.type = q.type,
+               R = R,
+               y.censored = y.censored,
+               y.ind = y.ind,
+               nitr.GEF = extraArg$nitr.GEF,
+               nburnin = extraArg$nburnin,
+               nthin = extraArg$nthin,
+               monitors = c("Xall", "qq"))
+  outputs <- furrr::future_map(lapply(rep("data", as.numeric(settings$state.data.assimilation$chains)), get), MCMC_function)
+  dat <- do.call(rbind, outputs)
   
   #---- Saving the chains
   save(dat, file=file.path(settings$outdir, paste0('dat',t,'.Rdata')))
@@ -502,8 +375,8 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
   q.bar <- matrix(apply(mq, 2, mean),
                   length(elements.W.Data),
                   length(elements.W.Data)
-                  )  # Mean Omega, Precision
-
+  )  # Mean Omega, Precision
+  
   # Setting up the prior for the next step from the posterior of this step
   if (t < nt){
     if (q.type == single.q){ #if it's a gamma case
@@ -540,10 +413,109 @@ GEF.MultiSite<-function(settings, Forecast, Observed, H, extraArg,...){
               n = n,
               X.new=X.new,
               aqq=aqq,
-              bqq=bqq,
-              elements.W.Data=elements.W.Data
+              bqq=bqq
   )
   )
 }
 
-
+##' @title MCMC_function
+##' @author Michael Dietze \email{dietze@@bu.edu}, Ann Raiho, Hamze Dokoohaki, and Dongchen Zhang.
+##' @param data list containing everything needed for the MCMC sampling.
+##' @details This function replace the previous code where implenmented the MCMC sampling part, which allows the MCMC sampling of multiple chains under parallel mode.
+MCMC_function <- function(data){
+  dimensions.tobit <- list(X = length(data$elements.W.Data),
+                           X.mod = ncol(data$X),
+                           Q = c(nrow(data$aqq), ncol(data$aqq))
+  )
+  # Contants defined in the model
+  constants.tobit <-
+    list(
+      N = ncol(data$X),
+      YN = length(data$elements.W.Data),
+      nH = length(data$elements.W.Data),
+      H = data$elements.W.Data,
+      NotH = which(!(1:ncol(data$X) %in% data$elements.W.Data)),
+      nNotH = which(!(1:ncol(data$X) %in% data$elements.W.Data)) %>% length(),
+      q.type=data$q.type
+    )
+  # Data used for setting the likelihood and other stuff
+  data.tobit <-
+    list(
+      muf = as.vector(data$mu.f),
+      pf = data$Pf,
+      aq = data$aqq[,,t],
+      bq = data$bqq[t],
+      y.ind = data$y.ind,
+      y.censored = data$y.censored,
+      r = solve(data$R)
+    )
+  if(constants.tobit$YN == 1){
+    #add error message if trying to run SDA with 1 obs and 1 state variable no model currently exists to handle this case, need to remove for loop from GEF_singleobs_nimble for this case and save new model
+    if(constants.tobit$N == 1){
+      PEcAn.logger::logger.error("No model exists for assimilating 1 observation and 1 state variable, add more state variables or edit GEF_singleobs_nimble to work with 1 state variable")
+      return(0)
+    }
+    #slight adjustment to inputs for nimble function when running with 1 obs
+    inits.pred$qq <- 0.368
+    dimensions.tobit$y.censored <- 1
+    dimensions.tobit$y.ind <- 1
+    constants.tobit$q.type <- NULL
+    inits.pred <-
+      list(
+        X.mod = as.vector(data$mu.f),
+        X = as.vector(data$mu.f)[data$elements.W.Data],
+        Xall = as.vector(data$mu.f),
+        Xs = as.vector(data$mu.f)[data$elements.W.Data],
+        q = diag(1, length(data$elements.W.Data), length(data$elements.W.Data))
+      )
+    model_pred <- nimble::nimbleModel(GEF_singleobs_nimble,
+                                      data = data.tobit,
+                                      dimensions = dimensions.tobit,
+                                      constants = constants.tobit,
+                                      inits = inits.pred,
+                                      name = 'base')
+  }else{
+    model_pred <- nimble::nimbleModel(GEF.MultiSite.Nimble,
+                                      data = data.tobit,
+                                      dimensions = dimensions.tobit,
+                                      constants = constants.tobit,
+                                      name = 'base')
+  }
+  ## Adding X.mod,q,r as data for building model.
+  conf <- nimble::configureMCMC(model_pred, print=TRUE)
+  conf$setMonitors(data$monitors) 
+  samplerNumberOffset <- length(conf$getSamplers())
+  
+  for(i in 1:length(data$y.ind)) {
+    node <- paste0('y.censored[',i,']')
+    conf$addSampler(node, 'toggle', control=list(type='RW'))
+  }
+  #handling samplers
+  samplerLists <- conf$getSamplers()
+  samplerLists[[2]]$control <- list(propCov= data$Pf, adaptScaleOnly = TRUE, adaptive = TRUE)
+  conf$setSamplers(samplerLists)
+  
+  conf$printSamplers()
+  Rmcmc <- nimble::buildMCMC(conf)
+  Cmodel <- nimble::compileNimble(model_pred)
+  Cmcmc <- nimble::compileNimble(Rmcmc, project = model_pred, showCompilerOutput = TRUE)
+  
+  for(i in 1:length(data$y.ind)) {
+    valueInCompiledNimbleFunction(Cmcmc$samplerFunctions[[samplerNumberOffset+i]], 'toggle', 1-data$y.ind[i])
+  }
+  inits <- function(){
+    ind <- sample(seq_along(1:nrow(data$X)), 1)
+    init_muf <- data$X[ind,]
+    list(X.mod = as.vector(init_muf), 
+         X = as.vector(init_muf)[data$elements.W.Data], 
+         Xall = as.vector(init_muf),
+         Xs = as.vector(init_muf)[data$elements.W.Data],
+         q = diag(1, length(data$elements.W.Data), length(data$elements.W.Data)))
+  }
+  if(exists("inits.pred")){
+    dat <- runMCMC(Cmcmc, niter = data$nitr.GEF, nburnin = data$nburnin, thin = data$nthin, nchains = 1)
+  }else{
+    dat <- runMCMC(Cmcmc, niter = data$nitr.GEF, nburnin = data$nburnin, thin = data$nthin, nchains = 1, inits = inits)
+  }
+  return(dat)
+}

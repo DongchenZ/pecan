@@ -441,11 +441,12 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     plant_wood_vars <- c("AbvGrndWood", "abvGrndWoodFrac", "coarseRootFrac", "fineRootFrac")
     if (all(plant_wood_vars %in% ic.names)) {
       # reconstruct total wood C
-      if(IC$abvGrndWoodFrac < 0.1){
-        wood_total_C <- 0
+      if(IC$abvGrndWoodFrac < 0.05){
+        wood_total_C <- IC$AbvGrndWood
       }else{
         wood_total_C <- IC$AbvGrndWood / IC$abvGrndWoodFrac
       }
+      
       #Sanity check
       if (is.infinite(wood_total_C) | is.nan(wood_total_C) | wood_total_C < 0) {
         wood_total_C <- 0
@@ -461,7 +462,7 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
               IC$abvGrndWoodFrac
             )
           )
-        }
+      }
       param[which(param[, 1] == "plantWoodInit"),  2] <- wood_total_C
       param[which(param[, 1] == "coarseRootFrac"), 2] <- IC$coarseRootFrac
       param[which(param[, 1] == "fineRootFrac"),   2] <- IC$fineRootFrac
@@ -496,11 +497,11 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
       param[which(param[, 1] == "microbeInit"), 2] <- IC$microbe
     }
   }
-
+  
   else if (length(settings$run$inputs$poolinitcond$path)>0) {
     ICs_num <- length(settings$run$inputs$poolinitcond$path)
     IC.path <- settings$run$inputs$poolinitcond$path[[sample(1:ICs_num, 1)]]
-
+    
     IC.pools <- PEcAn.data.land::prepare_pools(IC.path, constants = list(sla = SLA))
     
     if(!is.null(IC.pools)){
@@ -576,10 +577,11 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
   }
   if(file.exists(file.path(settings$rundir, run.id, "sipnet.param"))) file.rename(file.path(settings$rundir, run.id, "sipnet.param"),file.path(settings$rundir, run.id, paste0("sipnet_",lubridate::year(settings$run$start.date),"_",lubridate::year(settings$run$end.date),".param")))
   
-
+  
   utils::write.table(param, file.path(settings$rundir, run.id, "sipnet.param"), row.names = FALSE, col.names = FALSE,
-              quote = FALSE)
-} # write.config.SIPNET
+                     quote = FALSE)
+} 
+# write.config.SIPNET
 #--------------------------------------------------------------------------------------------------#
 ##'
 ##' Clear out previous SIPNET config and parameter files.

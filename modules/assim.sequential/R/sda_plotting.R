@@ -32,14 +32,14 @@ generate_colors_sda <-function(){
 ##' @export
 
 interactive.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov, obs, X, FORECAST, ANALYSIS){
-
+  
   if (!requireNamespace("plyr", quietly = TRUE)) {
     PEcAn.logger::logger.error(
       "Can't find package 'plyr',",
       "needed by `PEcAnAssimSequential::interactive.plotting.sda()`.",
       "Please install it and try again.")
   }
-
+  
   #Defining some colors
   generate_colors_sda()
   t1 <- 1
@@ -129,14 +129,14 @@ interactive.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov, ob
 ##' @export
 
 postana.timeser.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov, obs, X, FORECAST, ANALYSIS){
-
+  
   if (!requireNamespace("plyr", quietly = TRUE)) {
     PEcAn.logger::logger.error(
       "Can't find package 'plyr',",
       "needed by `PEcAnAssimSequential::postana.timeser.plotting.sda()`.",
       "Please install it and try again.")
   }
-
+  
   #Defining some colors
   generate_colors_sda()
   t1 <- 1
@@ -158,7 +158,7 @@ postana.timeser.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov
     if (is.na(x)) {
       rep(NA, length(names.y))
     } else {
-    sqrt(diag(x))
+      sqrt(diag(x))
     }
   })))
   
@@ -171,7 +171,7 @@ postana.timeser.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov
   
   Xsum <- plyr::laply(FORECAST, function(x) { mean(rowSums(x[,1:length(names.y)], na.rm = TRUE)) })[t1:t]
   Xasum <- plyr::laply(ANALYSIS, function(x) { mean(rowSums(x[,1:length(names.y)], na.rm = TRUE)) })[t1:t]
-
+  
   #------For each state variable 
   for (i in seq_len(ncol(X))) {
     Xbar <- plyr::laply(FORECAST[t1:t], function(x) {
@@ -203,7 +203,7 @@ postana.timeser.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov
     
     # observation / data
     if (i<=ncol(X)) { #
-     ciEnvelope(as.Date(obs.times[t1:t]), 
+      ciEnvelope(as.Date(obs.times[t1:t]), 
                  as.numeric(Ybar[, i]) - as.numeric(YCI[, i]) * 1.96, 
                  as.numeric(Ybar[, i]) + as.numeric(YCI[, i]) * 1.96, 
                  col = alphagreen)
@@ -232,14 +232,14 @@ postana.timeser.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov
 ##' @export
 
 postana.bias.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov, obs, X, FORECAST, ANALYSIS){
-
+  
   if (!requireNamespace("plyr", quietly = TRUE)) {
     PEcAn.logger::logger.error(
       "Can't find package 'plyr',",
       "needed by `PEcAnAssimSequential::postana.bias.plotting.sda()`.",
       "Please install it and try again.")
   }
-
+  
   #Defining some colors
   generate_colors_sda()
   t1 <- 1
@@ -290,7 +290,7 @@ postana.bias.plotting.sda<-function(settings, t, obs.times, obs.mean, obs.cov, o
          xlab = "Time", ylab = "Update", 
          main = paste(colnames(X)[i], 
                       "Update = Forecast - Analysis"))
-  ciEnvelope(rev(t1:t), 
+    ciEnvelope(rev(t1:t), 
                rev(Xbar - XaCI[, 1]), 
                rev(Xbar - XaCI[, 2]), 
                col = alphapurple)
@@ -312,7 +312,7 @@ postana.bias.plotting.sda.corr<-function(t, obs.times, X, aqq, bqq){
   t1<- 1
   #Defining some colors
   generate_colors_sda()
-
+  
   #---
   pdf('SDA/process.var.plots.pdf')
   
@@ -334,7 +334,7 @@ postana.bias.plotting.sda.corr<-function(t, obs.times, X, aqq, bqq){
 ##' @export
 
 post.analysis.ggplot <- function(settings, t, obs.times, obs.mean, obs.cov, obs, X, FORECAST, ANALYSIS, plot.title=NULL){
-
+  
   t1 <- 1
   #Defining some colors
   ready.OBS<-NULL
@@ -368,32 +368,32 @@ post.analysis.ggplot <- function(settings, t, obs.times, obs.mean, obs.cov, obs,
   #first merging mean and conv based on the day
   
   tryCatch({
-      ready.OBS<- names(obs.mean)%>%
-        purrr::map(~c(obs.mean[.x],obs.cov[.x],.x)%>%
-                     setNames(c('means','covs','Date')))%>%
-        setNames(names(obs.mean))%>%
-        purrr::map_df(function(one.day.data){
-          #CI
-          
-          purrr::map2_df(sqrt(diag(one.day.data$covs)), one.day.data$means,
-                         function(sd, mean){
-                           data.frame(mean-(sd*1.96), mean+(sd*1.96))
-                           
-                         })%>%
-            mutate(Variables=names(one.day.data$means))%>%
-            `colnames<-`(c('2.5%','97.5%','Variables'))%>%
-            mutate(means=one.day.data$means%>%unlist,
-                   Type="Data",
-                   Date=one.day.data$Date%>%as.POSIXct(tz="EST"))
-          
-          
-        })
-    },
-    error = function(e) {
-      ready.OBS<-NULL
-    }
+    ready.OBS<- names(obs.mean)%>%
+      purrr::map(~c(obs.mean[.x],obs.cov[.x],.x)%>%
+                   setNames(c('means','covs','Date')))%>%
+      setNames(names(obs.mean))%>%
+      purrr::map_df(function(one.day.data){
+        #CI
+        
+        purrr::map2_df(sqrt(diag(one.day.data$covs)), one.day.data$means,
+                       function(sd, mean){
+                         data.frame(mean-(sd*1.96), mean+(sd*1.96))
+                         
+                       })%>%
+          mutate(Variables=names(one.day.data$means))%>%
+          `colnames<-`(c('2.5%','97.5%','Variables'))%>%
+          mutate(means=one.day.data$means%>%unlist,
+                 Type="Data",
+                 Date=one.day.data$Date%>%as.POSIXct(tz="EST"))
+        
+        
+      })
+  },
+  error = function(e) {
+    ready.OBS<-NULL
+  }
   )
-
+  
   ready.to.plot <- ready.OBS %>%
     bind_rows(ready.FA)
   
@@ -412,21 +412,21 @@ post.analysis.ggplot <- function(settings, t, obs.times, obs.mean, obs.cov, obs,
     })
   
   
-
-      p<-ready.to.plot%>%
-        ggplot2::ggplot(aes(x=Date))+
-        geom_ribbon(aes(ymin=`2.5%`,ymax=`97.5%`,fill=Type),color="black")+
-        geom_line(aes(y=means, color=Type),lwd=1.02,linetype=2)+
-        geom_point(aes(y=means, color=Type),size=3,alpha=0.75)+
-        scale_fill_manual(values = c(alphapink,alphagreen,alphablue),name="")+
-        scale_color_manual(values = c(alphapink,alphagreen,alphablue),name="")+
-        theme_bw(base_size = 17)+
-        facet_wrap(~Variables, scales = "free", ncol=2)+
-        theme(legend.position = "top",
-              strip.background = element_blank())->p
-      if (!is.null(plot.title)) p <- p + labs(title=plot.title)
-
-
+  
+  p<-ready.to.plot%>%
+    ggplot2::ggplot(aes(x=Date))+
+    geom_ribbon(aes(ymin=`2.5%`,ymax=`97.5%`,fill=Type),color="black")+
+    geom_line(aes(y=means, color=Type),lwd=1.02,linetype=2)+
+    geom_point(aes(y=means, color=Type),size=3,alpha=0.75)+
+    scale_fill_manual(values = c(alphapink,alphagreen,alphablue),name="")+
+    scale_color_manual(values = c(alphapink,alphagreen,alphablue),name="")+
+    theme_bw(base_size = 17)+
+    facet_wrap(~Variables, scales = "free", ncol=2)+
+    theme(legend.position = "top",
+          strip.background = element_blank())->p
+  if (!is.null(plot.title)) p <- p + labs(title=plot.title)
+  
+  
   
   
   pdf("SDA/SDA.pdf", width = 14, height = 10, onefile = TRUE)
@@ -442,14 +442,14 @@ post.analysis.ggplot <- function(settings, t, obs.times, obs.mean, obs.cov, obs,
 ##' @rdname interactive.plotting.sda
 ##' @export
 post.analysis.ggplot.violin <- function(settings, t, obs.times, obs.mean, obs.cov, obs, X, FORECAST, ANALYSIS, plot.title=NULL){
-
+  
   t1 <- 1 
   #Defining some colors
   generate_colors_sda()
   var.names <- sapply(settings$state.data.assimilation$state.variable, '[[', "variable.name")
-
-#rearranging the forcast and analysis data  
-
+  
+  #rearranging the forcast and analysis data  
+  
   All.my.data <- list(FORECAST=FORECAST,ANALYSIS=ANALYSIS)
   
   ready.FA <- c('FORECAST','ANALYSIS')%>%
@@ -499,27 +499,27 @@ post.analysis.ggplot.violin <- function(settings, t, obs.times, obs.mean, obs.co
       }
       
     })
-
-
-      p<-ready.FA%>%
-#        filter(Variables==vari)%>%
-        ggplot2::ggplot(aes(Date,Value))+
-        geom_ribbon(aes(x=Date,y=means,ymin=`2.5%`,ymax=`97.5%`,fill=Type), data=obs.df, color="black")+
-        geom_line(aes(y=means, color=Type),data=obs.df,lwd=1.02,linetype=2)+
-        geom_violin(aes(x=Date,fill=Type,group=interaction(Date,Type)), position = position_dodge(width=0.9))+
-        geom_jitter(aes(color=Type), position=position_jitterdodge(dodge.width=0.9))+
-        scale_fill_manual(values = c(alphapink,alphagreen,alphablue))+
-        scale_color_manual(values = c(alphapink,alphagreen,alphablue))+
-        facet_wrap(~Variables, scales = "free", ncol=2)+
-        theme_bw(base_size = 17)+
-      #  labs(y=paste(vari,'(',unit,')'))+
-        theme(legend.position = "top",
-              strip.background = element_blank())
-      if (!is.null(plot.title)) p <- p + labs(title=plot.title)
-
+  
+  
+  p<-ready.FA%>%
+    #        filter(Variables==vari)%>%
+    ggplot2::ggplot(aes(Date,Value))+
+    geom_ribbon(aes(x=Date,y=means,ymin=`2.5%`,ymax=`97.5%`,fill=Type), data=obs.df, color="black")+
+    geom_line(aes(y=means, color=Type),data=obs.df,lwd=1.02,linetype=2)+
+    geom_violin(aes(x=Date,fill=Type,group=interaction(Date,Type)), position = position_dodge(width=0.9))+
+    geom_jitter(aes(color=Type), position=position_jitterdodge(dodge.width=0.9))+
+    scale_fill_manual(values = c(alphapink,alphagreen,alphablue))+
+    scale_color_manual(values = c(alphapink,alphagreen,alphablue))+
+    facet_wrap(~Variables, scales = "free", ncol=2)+
+    theme_bw(base_size = 17)+
+    #  labs(y=paste(vari,'(',unit,')'))+
+    theme(legend.position = "top",
+          strip.background = element_blank())
+  if (!is.null(plot.title)) p <- p + labs(title=plot.title)
+  
   
   pdf("SDA/SDA.Violin.pdf", width = 14, height = 10, onefile = TRUE)
-   print(p)
+  print(p)
   dev.off()
   
   #saving plot data
@@ -530,7 +530,7 @@ post.analysis.ggplot.violin <- function(settings, t, obs.times, obs.mean, obs.co
 ##' @rdname interactive.plotting.sda
 ##' @export
 post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs.cov, FORECAST, ANALYSIS, plot.title=NULL, facetg=FALSE, readsFF=NULL, Add_Map=FALSE){
-
+  
   if (!requireNamespace("ggrepel", quietly = TRUE)) {
     PEcAn.logger::logger.error(
       "Package `ggrepel` not found, but needed by",
@@ -584,7 +584,7 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
       obs.cov[[name]][[site]] <- obs_cov
     }
   }
-
+  
   #Defining some colors
   t1 <- 1
   generate_colors_sda()
@@ -607,7 +607,7 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
     purrr::map_df(function(listFA){
       All.my.data[[listFA]]%>%
         purrr::map_df(function(state.vars){
-         
+          
           #finding the mean and Ci for all the state variables
           site.ids %>% unique() %>%
             map_df(function(site){
@@ -622,12 +622,12 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
               Lower=quantile(Value,0.025, na.rm=T),
               Upper = quantile(Value, 0.975,  na.rm = TRUE))
         }) %>% mutate(Type = paste0("SDA_", listFA),
-                    Date = rep(as.Date(names(FORECAST)), each = colnames((All.my.data[[listFA]])[[1]]) %>% length() / length(unique(site.ids))) %>% as.POSIXct()
+                      Date = rep(as.Date(names(FORECAST)), each = colnames((All.my.data[[listFA]])[[1]]) %>% length() / length(unique(site.ids))) %>% as.POSIXct()
         )
-    
-    })
       
-
+    })
+  
+  
   obs.var.names <- (obs.mean[[1]])[[1]] %>% names()
   #Observed data
   #first merging mean and conv based on the day
@@ -651,8 +651,8 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
         # dropped the "_" from "SDA_Data"
         mutate(Type="Data",
                Date=one.day.data$Date %>% as.POSIXct())
-        # mutate(Type="SDA_Data",
-        #        Date=one.day.data$Date %>% as.POSIXct())
+      # mutate(Type="SDA_Data",
+      #        Date=one.day.data$Date %>% as.POSIXct())
       
       
     })%>% 
@@ -664,17 +664,17 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
     
     readsFF.df<-readsFF %>%
       map_df(function(siteX){
-    
+        
         siteX %>% map_df(function(DateX){
           DateX %>% 
             map_df(~.x %>% t ) %>%
             tidyr::gather(Variable, Value,-c(Date, Site)) %>%
             group_by(Variable,Date, Site) %>%
-             summarise(
-               Means=mean(Value, na.rm=T),
-               Lower=quantile(Value,0.025, na.rm=T),
-               Upper=quantile(Value,0.975, na.rm=T)) %>% 
-             mutate(Type="ForwardForecast")
+            summarise(
+              Means=mean(Value, na.rm=T),
+              Lower=quantile(Value,0.025, na.rm=T),
+              Upper=quantile(Value,0.975, na.rm=T)) %>% 
+            mutate(Type="ForwardForecast")
         })
       })
     
@@ -685,7 +685,7 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
   
   ready.to.plot$Variable[ready.to.plot$Variable=="LeafC"] <-"leaf_carbon_content"
   
-
+  
   #Adding the units to the variables
   ready.to.plot$Variable %>% unique() %>% 
     walk(function(varin){
@@ -707,25 +707,25 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
     #for each site  and for each variable
     all.plots<-ready.to.plot$Site%>%unique() %>%
       purrr::map(function(site){
-            #plotting
-            ready.to.plot%>%
-              filter(Site==site)%>%
-              ggplot2::ggplot(aes(x=Date))+
-              geom_ribbon(aes(ymin=Lower,ymax=Upper,fill=Type),color="black")+
-              geom_line(aes(y=Means, color=Type),lwd=1.02,linetype=2)+
-              geom_point(aes(y=Means, color=Type),size=3,alpha=0.75)+
-              scale_fill_manual(values = c(alphabrown,alphapink,alphagreen,alphablue),name="")+
-              scale_color_manual(values = c(alphabrown,alphapink,alphagreen,alphablue),name="")+
-              theme_bw(base_size = 17)+
-              labs(y="", subtitle=paste0("Site id: ",site))+
-              theme(legend.position = "top",
-                    strip.background = element_blank())->p
-            if (!is.null(plot.title)) p <- p + labs(title=plot.title)
-            p <- p + facet_wrap(~Variable, ncol=2, scales = "free_y")
-            list(p)
-      
+        #plotting
+        ready.to.plot%>%
+          filter(Site==site)%>%
+          ggplot2::ggplot(aes(x=Date))+
+          geom_ribbon(aes(ymin=Lower,ymax=Upper,fill=Type),color="black")+
+          geom_line(aes(y=Means, color=Type),lwd=1.02,linetype=2)+
+          geom_point(aes(y=Means, color=Type),size=3,alpha=0.75)+
+          scale_fill_manual(values = c(alphabrown,alphapink,alphagreen,alphablue),name="")+
+          scale_color_manual(values = c(alphabrown,alphapink,alphagreen,alphablue),name="")+
+          theme_bw(base_size = 17)+
+          labs(y="", subtitle=paste0("Site id: ",site))+
+          theme(legend.position = "top",
+                strip.background = element_blank())->p
+        if (!is.null(plot.title)) p <- p + labs(title=plot.title)
+        p <- p + facet_wrap(~Variable, ncol=2, scales = "free_y")
+        list(p)
+        
       })
-
+    
   }else{
     filew <- 10
     fileh <- 8
@@ -758,19 +758,19 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
           })
       })
   }
-
+  
   if(Add_Map){
     #------------------------------------------------ map
     site.locs <- settings %>% 
       purrr::map(~.x[['run']] ) %>% 
       purrr::map('site') %>% 
       purrr::map_dfr(~c(.x[['lon']],.x[['lat']]) %>%
-                as.numeric)%>% 
+                       as.numeric)%>% 
       t %>%
       as.data.frame()%>%
       `colnames<-`(c("Lon","Lat")) %>%
       dplyr::mutate(Site=site.ids %>% unique(),
-             Name=site.names)
+                    Name=site.names)
     
     suppressMessages({
       aoi_boundary_HARV <- sf::st_read(system.file("extdata", "eco-regionl2.json", package = "PEcAnAssimSequential"))
@@ -810,17 +810,17 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
       ) + 
       #coord_sf(datum = sf::st_crs(2163),default = F)+
       scale_fill_manual(values = c("#a6cee3",
-                                   "#1f78b4","#b2df8a",
-                                   "#33a02c","#fb9a99",
-                                   "#e31a1c","#fdbf6f",
-                                   "#ff7f00","#cab2d6",
-                                   "#6a3d9a","#ffff99",
-                                   "#b15928","#fccde5",
-                                   "#d9d9d9","#66c2a5",
-                                   "#ffd92f","#8dd3c7",
-                                   "#80b1d3","#d9d9d9",
-                                   "#fdbf6f"),name="Eco-Region")+
-      scale_color_manual(values= c("#e31a1c","#33a02c"))+
+                                            "#1f78b4","#b2df8a",
+                                            "#33a02c","#fb9a99",
+                                            "#e31a1c","#fdbf6f",
+                                            "#ff7f00","#cab2d6",
+                                            "#6a3d9a","#ffff99",
+                                            "#b15928","#fccde5",
+                                            "#d9d9d9","#66c2a5",
+                                            "#ffd92f","#8dd3c7",
+                                            "#80b1d3","#d9d9d9",
+                                            "#fdbf6f"),name="Eco-Region")+
+                                              scale_color_manual(values= c("#e31a1c","#33a02c"))+
       theme_minimal()+
       theme(axis.text = element_blank())
     
@@ -844,18 +844,36 @@ post.analysis.multisite.ggplot <- function(settings, t, obs.times, obs.mean, obs
   
 }
 
+
+
 ##' @rdname interactive.plotting.sda
+##' @param ANALYSIS Analysis object from the sda.output.Rdata.
+##' @param FORECAST Forecast object from the sda.output.Rdata.
+##' @param obs.mean obs.mean
+##' @param obs.cov obs.cov
+##' @param outdir physical path where the pdf will be stored.
+##' @param pft.path Physical path of pft.csv file to allow by = pft option.
+##' @param by arrange figures by var, pft, or site.
+##' @param types data types that shown in the figure.
+##' @param CI range of confidence interval.
+##' @param unit list of unit used for y axis label.
+##' @param style color option.
 ##' @export
+##' @author Dongchen Zhang
 SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = NULL, outdir, pft.path = NULL, by = "site", types = c("FORECAST", "ANALYSIS", "OBS"), CI = c(0.025, 0.975), 
                                 unit = list(AbvGrndWood = "Mg/ha", LAI = "m2/m2", SoilMoistFrac = "", TotSoilCarb = "kg/m2"),
                                 style = list(general_color = c("FORECAST" = "blue", "ANALYSIS" = "red", "OBS" = "black"),
                                              fill_color = c("FORECAST" = "yellow", "ANALYSIS" = "green", "OBS" = "grey"),
                                              title_color = "red")){
+  #Check package availability.
+  if("try-error" %in% class(try(find.package("ggpubr"), silent = T))){
+    PEcAn.logger::logger.info("Package ggpubr is not installed! Please install it and rerun the function!")
+    return(0)
+  }
   #TODO: make page, font, line, point sizes adjustable.
   time_points <- names(FORECAST)
   site_ids <- attributes(FORECAST[[1]])$Site
   var_names <- attributes(FORECAST[[1]])$dimnames[[2]]
-  
   #new diag function: fixed the bug when length==1 then it will return 0x0 matrix
   diag_fix <- function(vector){
     if (length(vector)>1){
@@ -866,7 +884,7 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
   }
   #read pft.csv file for the option by == pft.
   if(!is.null(pft.path)){
-    pft <- read.csv(pft.path)
+    pft <- utils::read.csv(pft.path)
   }
   #create database
   DB <- data.frame()
@@ -890,8 +908,8 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
             var_ind <- which(var_name == var_names)
             ind <- var_ind[which(var_ind %in% site_ind)]
             MEAN <- mean(temp_Dat[,ind])
-            MIN <- quantile(temp_Dat[,ind], CI[1])
-            MAX <- quantile(temp_Dat[,ind], CI[2])
+            MIN <- stats::quantile(temp_Dat[,ind], CI[1])
+            MAX <- stats::quantile(temp_Dat[,ind], CI[2])
           }
           if(MIN < 0) MIN <- 0
           DB <- rbind(DB, list(id = id, date = time_point, var_name = var_name, type = type, upper = MAX, lower = MIN, mean = MEAN))
@@ -910,13 +928,13 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
         site_p <- rlist::list.append(site_p, dplyr::filter(DB, id == site.id & var_name == var.name) %>% 
                                        dplyr::select(-c(id, var_name)) %>%
                                        dplyr::mutate(date = lubridate::ymd(date)) %>%
-                                       ggplot2::ggplot(aes(x=date)) +
-                                       geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill=type), inherit.aes = FALSE, alpha = 0.5) +
-                                       geom_line(aes(y=mean, color=type),lwd=0.5,linetype=2) +
-                                       geom_point(aes(y=mean, color=type), size=1.5, alpha=0.75) +
-                                       scale_fill_manual(values = style$fill_color) +
-                                       scale_color_manual(values = style$general_color) +
-                                       ylab(paste0(var.name, " (", unit[var.name], ")")))
+                                       ggplot2::ggplot(ggplot2::aes(x=date)) +
+                                       ggplot2::geom_ribbon(ggplot2::aes(x = .data$date, ymin = .data$lower, ymax = .data$upper, fill=.data$type), inherit.aes = FALSE, alpha = 0.5) +
+                                       ggplot2::geom_line(ggplot2::aes(y=mean, color=type),lwd=0.5,linetype=2) +
+                                       ggplot2::geom_point(ggplot2::aes(y=mean, color=type), size=1.5, alpha=0.75) +
+                                       ggplot2::scale_fill_manual(values = style$fill_color) +
+                                       ggplot2::scale_color_manual(values = style$general_color) +
+                                       ggplot2::ylab(paste0(var.name, " (", unit[var.name], ")")))
       }
       p <- rlist::list.append(p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = site_p, common.legend = TRUE), 
                                                          top = ggpubr::text_grob(site.id, color = style$title_color, face = "bold", size = 14)))
@@ -932,14 +950,14 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
         var_p <- rlist::list.append(var_p, dplyr::filter(DB, id == site.id & var_name == var.name) %>% 
                                       dplyr::select(-c(id, var_name)) %>%
                                       dplyr::mutate(date = lubridate::ymd(date)) %>%
-                                      ggplot2::ggplot(aes(x=date)) +
-                                      geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill=type), inherit.aes = FALSE, alpha = 0.5) +
-                                      geom_line(aes(y=mean, color=type),lwd=0.5,linetype=2) +
-                                      geom_point(aes(y=mean, color=type), size=1.5, alpha=0.75) +
-                                      scale_fill_manual(values = style$fill_color) +
-                                      scale_color_manual(values = style$general_color) +
-                                      ylab(paste0(var.name, " (", unit[var.name], ")")) +
-                                      ggtitle(site.id))
+                                      ggplot2::ggplot(ggplot2::aes(x=date)) +
+                                      ggplot2::geom_ribbon(ggplot2::aes(x = .data$date, ymin = .data$lower, ymax = .data$upper, fill=.data$type), inherit.aes = FALSE, alpha = 0.5) +
+                                      ggplot2::geom_line(ggplot2::aes(y=mean, color=type),lwd=0.5,linetype=2) +
+                                      ggplot2::geom_point(ggplot2::aes(y=mean, color=type), size=1.5, alpha=0.75) +
+                                      ggplot2::scale_fill_manual(values = style$fill_color) +
+                                      ggplot2::scale_color_manual(values = style$general_color) +
+                                      ggplot2::ylab(paste0(var.name, " (", unit[var.name], ")")) +
+                                      ggplot2::ggtitle(site.id))
       }
       p <- rlist::list.append(p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = var_p, common.legend = TRUE), 
                                                          top = ggpubr::text_grob(var.name, color = style$title_color, face = "bold", size = 14)))
@@ -962,14 +980,14 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
             site_p <- rlist::list.append(site_p, dplyr::filter(DB, id == site.id & var_name == var.name) %>% 
                                            dplyr::select(-c(id, var_name)) %>%
                                            dplyr::mutate(date = lubridate::ymd(date)) %>%
-                                           ggplot2::ggplot(aes(x=date)) +
-                                           geom_ribbon(aes(x = date, ymin = lower, ymax = upper, fill=type), inherit.aes = FALSE, alpha = 0.5) +
-                                           geom_line(aes(y=mean, color=type),lwd=0.5,linetype=2) +
-                                           geom_point(aes(y=mean, color=type), size=1.5, alpha=0.75) +
-                                           scale_fill_manual(values = style$fill_color) +
-                                           scale_color_manual(values = style$general_color) +
-                                           ylab(paste0(var.name, " (", unit[var.name], ")")) +
-                                           ggtitle(site.id))
+                                           ggplot2::ggplot(ggplot2::aes(x=date)) +
+                                           ggplot2::geom_ribbon(ggplot2::aes(x = .data$date, ymin = .data$lower, ymax = .data$upper, fill=.data$type), inherit.aes = FALSE, alpha = 0.5) +
+                                           ggplot2::geom_line(ggplot2::aes(y=mean, color=type),lwd=0.5,linetype=2) +
+                                           ggplot2::geom_point(ggplot2::aes(y=mean, color=type), size=1.5, alpha=0.75) +
+                                           ggplot2::scale_fill_manual(values = style$fill_color) +
+                                           ggplot2::scale_color_manual(values = style$general_color) +
+                                           ggplot2::ylab(paste0(var.name, " (", unit[var.name], ")")) +
+                                           ggplot2::ggtitle(site.id))
           }
           var_p <- rlist::list.append(var_p, ggpubr::annotate_figure(ggpubr::ggarrange(plotlist = site_p, common.legend = TRUE), 
                                                                      top = ggpubr::text_grob(paste(PFT, var.name), color = style$title_color, face = "bold", size = 14)))
@@ -979,7 +997,7 @@ SDA_timeseries_plot <- function(ANALYSIS, FORECAST, obs.mean = NULL, obs.cov = N
     }
   }
   #print pdf
-  pdf(file.path(outdir, paste0("SDA_", by, ".pdf")),width = PDF_w, height = PDF_h)
+  grDevices::pdf(file.path(outdir, paste0("SDA_", by, ".pdf")),width = PDF_w, height = PDF_h)
   print(p)
-  dev.off()
+  grDevices::dev.off()
 }
