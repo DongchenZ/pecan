@@ -15,6 +15,7 @@ extract.nc.ERA5(
   newsite,
   vars = NULL,
   overwrite = FALSE,
+  verbose = FALSE,
   ...
 )
 }
@@ -35,7 +36,7 @@ extract.nc.ERA5(
 
 \item{newsite}{site name.}
 
-\item{vars}{variables to be extarcted. If NULL all the variables will be returned.}
+\item{vars}{variables to be extracted. If NULL all the variables will be returned.}
 
 \item{overwrite}{Logical if files needs to be overwritten.}
 }

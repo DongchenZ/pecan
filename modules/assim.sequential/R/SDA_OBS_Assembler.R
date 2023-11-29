@@ -19,9 +19,23 @@ SDA_OBS_Assembler <- function(settings){
   #extract Obs_Prep object from settings.
   Obs_Prep <- settings$state.data.assimilation$Obs_Prep
   
+  #check if we want to proceed the free run without any observations.
+  if (as.logical(settings$state.data.assimilation$free.run)) {
+    #calculate time points.
+    time_points <- obs_timestep2timepoint(Obs_Prep$start.date, Obs_Prep$end.date, Obs_Prep$timestep)
+    
+    #generate obs.mean and obs.cov with NULL filled.
+    obs.mean = vector("list", length(time_points)) %>% `names<-`(time_points)
+    obs.cov = vector("list", length(time_points)) %>% `names<-`(time_points)
+    
+    #save files.
+    save(obs.mean, file = file.path(Obs_Prep$outdir, "Rdata", "obs.mean.Rdata"))
+    save(obs.cov, file = file.path(Obs_Prep$outdir, "Rdata", "obs.cov.Rdata"))
+    return(list(obs.mean = obs.mean, obs.cov = obs.cov))
+  }
+  
   #prepare site_info offline, because we need to submit this to server remotely, which might not support the Bety connection.
-  site_info <- settings %>% 
-    purrr::map(~.x[['run']] ) %>% 
+  site_info <- settings$run %>% 
     purrr::map('site')%>% 
     purrr::map(function(site.list){
       #conversion from string to number
@@ -200,8 +214,8 @@ SDA_OBS_Assembler <- function(settings){
                          Obs_Prep[var_ind] %>% purrr::map(~.x$start.date), 
                          Obs_Prep[var_ind] %>% purrr::map(~.x$end.date)),
                     function(var_timestep, var_start_date, var_end_date){
-          obs_timestep2timepoint(var_start_date, var_end_date, var_timestep)
-        }) %>% 
+                      obs_timestep2timepoint(var_start_date, var_end_date, var_timestep)
+                    }) %>% 
         purrr::map(function(all_timepoints){
           all_timepoints[which(!all_timepoints %in% time_points)]
         }) %>% 

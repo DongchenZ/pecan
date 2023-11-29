@@ -22,7 +22,7 @@ PEcAn is not itself an ecosystem model, and it can be used to with a variety of 
 
 ## Documentation
 
-Consult documentation of the PEcAn Project; either the [lastest stable development](https://pecanproject.github.io/pecan-documentation/develop/) branch, the latest [release](https://pecanproject.github.io/pecan-documentation/master/). Documentation from [earlier releases is here](https://pecanproject.github.io/documentation.html).
+Consult documentation of the PEcAn Project; either the [latest stable development](https://pecanproject.github.io/pecan-documentation/develop/) branch, the latest [release](https://pecanproject.github.io/pecan-documentation/master/). Documentation from [earlier releases is here](https://pecanproject.github.io/documentation.html).
 
 ## Getting Started
 
@@ -31,8 +31,8 @@ See our ["Tutorials Page"](https://pecanproject.github.io/tutorials.html) that p
 ### Installation
 
 Complete instructions on how to install PEcAn can be found in the [documentation here](https://pecanproject.github.io/pecan-documentation/develop/pecan-manual-setup.html). To get PEcAn up and running you can use one of three methods:
-1. Run a [Virtual Machine](https://pecanproject.github.io/pecan-documentation/develop/pecan-manual-setup.html#install-vm). This is recommended for students and new users, and provides a consistent, tested environment for each release.
-2. Use [Docker](https://pecanproject.github.io/pecan-documentation/develop/pecan-manual-setup.html#install-docker). This is recommended, especially for development and production deployment.
+1. Run a [Virtual Machine](https://pecanproject.github.io/pecan-documentation/develop/install-vm.html#install-vm). This is recommended for students and new users, and provides a consistent, tested environment for each release.
+2. Use [Docker](https://pecanproject.github.io/pecan-documentation/develop/install-docker.html#install-docker). This is recommended, especially for development and production deployment.
 3. Install all of the PEcAn R packages on your own Linux or MacOS computer or server. This can be done by [installing from r-universe](https://pecanproject.github.io/pecan-documentation/develop/r-universe.html): 
 ``` r
 # Enable repository from pecanproject
@@ -47,7 +47,7 @@ This, however, may have limited functionality without also installing other comp
 
 ### Website
 
-Visit our [webage](https://pecanproject.github.io) to keep up with latest news, version, and information about the PEcAn Project
+Visit our [webpage](https://pecanproject.github.io) to keep up with latest news, version, and information about the PEcAn Project
 
 #### Web Interface demo
 The fastest way to begin modeling ecosystems is through the PEcAn web interface.  
