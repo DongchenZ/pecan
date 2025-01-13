@@ -28,7 +28,7 @@ sda.enkf_NorthAmerica <- function(settings,
                                   pre_enkf_params = NULL,
                                   ensemble.samples = NULL,
                                   control=list(TimeseriesPlot = FALSE,
-                                               OutlierDetection=FALSE,
+                                               OutlierDetection = FALSE,
                                                send_email = NULL,
                                                keepNC = TRUE,
                                                forceRun = TRUE,
@@ -374,4 +374,15 @@ sda.enkf_NorthAmerica <- function(settings,
       unlink(mailfile)
     }
   }
+  # assemble results.
+  sda.out.files <- file.path(settings$outdir, paste0("sda.output", 1:nt, ".Rdata"))
+  analysis.all <- forecast.all <- vector("list", nt)
+  for (file in seq_along(sda.out.files)) {
+    res_env <- new.env()
+    load(sda.out.files[file], envir = res_env)
+    analysis.all[[file]] <- res_env$sda.outputs$analysis
+    forecast.all[[file]] <- res_env$sda.outputs$forecast
+  }
+  save(list = c("analysis.all", "forecast.all"), file = file.path(settings$outdir, "sda.all.forecast.analysis.Rdata"))
+  gc()
 } # sda.enkf
