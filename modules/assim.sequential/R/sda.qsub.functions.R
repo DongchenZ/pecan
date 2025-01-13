@@ -53,7 +53,7 @@ parallel.write.configs <- function (settings, ensemble.samples, restart.list) {
     jobsh <- gsub("@LIB@", paste0("PEcAn.",settings$model$type), jobsh)
     writeLines(jobsh, con = file.path(folder.path, "job.sh"))
     # qsub command.
-    qsub <- "qsub -l h_rt=48:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+    qsub <- "qsub -l h_rt=24:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
     qsub <- gsub("@CORES@", cores, qsub)
     qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
     qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
@@ -170,7 +170,7 @@ parallel.split.met <- function (settings, my.split_inputs, conf.settings.before.
     jobsh <- gsub("@LIB@", paste0("PEcAn.",settings$model$type), jobsh)
     writeLines(jobsh, con = file.path(folder.path, "job.sh"))
     # qsub command.
-    qsub <- "qsub -l h_rt=48:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+    qsub <- "qsub -l h_rt=24:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
     qsub <- gsub("@CORES@", cores, qsub)
     qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
     qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
@@ -288,7 +288,7 @@ parallel.read.sda <- function(settings, my.read_restart, out.configs, stop.time,
     jobsh <- gsub("@LIB@", paste0("PEcAn.",settings$model$type), jobsh)
     writeLines(jobsh, con = file.path(folder.path, "job.sh"))
     # qsub command.
-    qsub <- "qsub -l h_rt=48:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+    qsub <- "qsub -l h_rt=24:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
     qsub <- gsub("@CORES@", cores, qsub)
     qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
     qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
@@ -353,14 +353,40 @@ parallel.read.sda <- function(settings, my.read_restart, out.configs, stop.time,
 #' @param only.nc Boolean: if we want to only delete NC files.
 #' @author Dongchen Zhang.
 job.sub <- function(settings, rm.file, only.nc) {
-  L <- length(settings)
   # grab info from settings.
   num.folder <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$folder.num)
   cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
-  num.per.folder <- ceiling(L/num.folder)
-  outdir <- settings$outdir
   # read run.txt table for different run ids.
-  run.lists <- readLines(file.path(outdir, "run/runs.txt"))
+  outdir <- settings$outdir
+  if (file.exists(file.path(outdir, "run/runs.txt"))) {
+    run.lists <- readLines(file.path(outdir, "run/runs.txt"))
+  } else {
+    ens.num <- as.numeric(settings$ensemble$size)
+    site.num <- length(settings)
+    # foreach.
+    cl <- parallel::makeCluster(as.numeric(cores))
+    doSNOW::registerDoSNOW(cl)
+    #progress bar
+    pb <- utils::txtProgressBar(min=1, max=length(settings), style=3)
+    progress <- function(n) utils::setTxtProgressBar(pb, n)
+    opts <- list(progress=progress)
+    # add namespace for variables inside the foreach.
+    i <- NULL
+    run.lists <- foreach::foreach(i = seq_along(settings), 
+                                  .packages=c("Kendall"), 
+                                  .options.snow=opts) %dopar% {
+                                    run.list <- c()
+                                    for (j in 1:ens.num) {
+                                      run.list <- c(run.list, paste0("ENS-", sprintf("%05d", j), "-", i))
+                                    }
+                                    return(run.list)
+                                  } %>% unlist
+    # stop parallel.
+    parallel::stopCluster(cl)
+    foreach::registerDoSEQ()
+  }
+  L <- length(run.lists)
+  num.per.folder <- ceiling(L/num.folder)
   # create folder for storing job outputs.
   batch.folder <- file.path(outdir, "batch")
   # delete the whole folder if it's not empty.
@@ -385,7 +411,7 @@ job.sub <- function(settings, rm.file, only.nc) {
     } else {
       dir.create(folder.path)
       # write parameters.
-      folder.runs <- run.lists[head.num:tail.num,]
+      folder.runs <- run.lists[head.num:tail.num]
       if (rm.file) {
         folder.runs <- file.path(outdir, "out", folder.runs)
       } else {
@@ -422,7 +448,7 @@ job.sub <- function(settings, rm.file, only.nc) {
     jobsh <- gsub("@CORES@", cores, jobsh)
     writeLines(jobsh, con = file.path(folder.path, "job.sh"))
     # qsub command.
-    qsub <- "qsub -l h_rt=48:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+    qsub <- "qsub -l h_rt=24:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
     qsub <- gsub("@CORES@", cores, qsub)
     qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
     qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
@@ -521,7 +547,7 @@ qsub_analysis_submission <- function(settings, block.list) {
     jobsh <- gsub("@CORES@", cores, jobsh)
     writeLines(jobsh, con = file.path(folder.path, "job.sh"))
     # qsub command.
-    qsub <- "qsub -l h_rt=48:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+    qsub <- "qsub -l h_rt=24:00:00 -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
     qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
     qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
     qsub <- gsub("@STDERR@", file.path(folder.path, "stderr.log"), qsub)
