@@ -4,7 +4,7 @@
 \alias{qsub_run_finished}
 \title{Check if qsub run finished}
 \usage{
-qsub_run_finished(run, host, qstat, verbose = TRUE)
+qsub_run_finished(run, host, qstat, verbose = FALSE)
 }
 \arguments{
 \item{run}{run ID, as an integer}

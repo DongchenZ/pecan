@@ -7,7 +7,7 @@
 #'
 #' @return `TRUE` if run is marked as DONE, otherwise FALSE.
 #' @export
-qsub_run_finished <- function(run, host, qstat, verbose = TRUE) {
+qsub_run_finished <- function(run, host, qstat, verbose = FALSE) {
   if (is.na(run)) {
     PEcAn.logger::logger.warn("Job", run, "encountered an error during submission.",
                               "NOTE that the job will be stamped as 'finished' in BETY.")
