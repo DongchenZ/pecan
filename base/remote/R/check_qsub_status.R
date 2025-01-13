@@ -25,7 +25,7 @@ qsub_run_finished <- function(run, host, qstat, verbose = FALSE) {
     out <- remote.execute.cmd(host = host, cmd = check, stderr = TRUE)
   }
 
-  if (length(out) > 0 && substring(out, nchar(out) - 3) == "DONE" | out == 1) {
+  if (length(out) > 0 && substring(out, nchar(out) - 3) == "DONE") { #  | out == 1
     if (verbose) {
       PEcAn.logger::logger.debug("Job", run, "for run", run_id_string, "finished")
     }
