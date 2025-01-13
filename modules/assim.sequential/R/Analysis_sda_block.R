@@ -184,7 +184,8 @@ build.block.xy <- function(settings, block.list.all, X, obs.mean, obs.cov, t) {
       f.2.y.ind <- obs.mean[[t]] %>%
         purrr::map(\(x)which(var.names %in% names(x))) %>%
         unlist %>%
-        unique
+        unique %>% 
+        sort
       H <- list(ind = f.2.y.ind %>% purrr::map(function(start){
         seq(start, length(site.ids) * length(var.names), length(var.names))
       }) %>% unlist() %>% sort)
@@ -225,7 +226,8 @@ build.block.xy <- function(settings, block.list.all, X, obs.mean, obs.cov, t) {
         } else {
           block.list[[i]]$data$y.censored <- rep(NA, max(obs_per_site))
           block.list[[i]]$data$r <- diag(1, max(obs_per_site))
-          block.h <- matrix(1, 1, max(obs_per_site))
+          block.h <- matrix(NA, 1, length(var.names))
+          block.h[1, f.2.y.ind] <- 1
         }
       } else {
         block.list[[i]]$data$y.censored <- y.censored[y.start:y.end]
@@ -236,7 +238,7 @@ build.block.xy <- function(settings, block.list.all, X, obs.mean, obs.cov, t) {
       block.list[[i]]$H <- block.h
       block.list[[i]]$constant$H <- which(apply(block.h, 2, sum) == 1)
       block.list[[i]]$constant$N <- length(f.start:f.end)
-      block.list[[i]]$constant$YN <- length(y.start:y.end)
+      block.list[[i]]$constant$YN <- length(block.list[[i]]$data$y.censored)
       block.list[[i]]$constant$q.type <- q.type
     }
     names(block.list) <- site.ids
@@ -387,7 +389,11 @@ MCMC_Init <- function (block.list, X) {
     #if we want the vector q.
     if (block.list[[i]]$constant$q.type == 3) {
       for (j in seq_along(block.list[[i]]$data$y.censored)) {
-        block.list[[i]]$Inits$q <- c(block.list[[i]]$Inits$q, stats::rgamma(1, shape = block.list[[i]]$data$aq[j], rate = block.list[[i]]$data$bq[j]))
+        temp.q <- stats::rgamma(1, shape = block.list[[i]]$data$aq[j], rate = block.list[[i]]$data$bq[j])
+        if (temp.q < 0.001) {
+          temp.q <- 0.001
+        }
+        block.list[[i]]$Inits$q <- c(block.list[[i]]$Inits$q, temp.q)
       }
     } else if (block.list[[i]]$constant$q.type == 4) {
       #if we want the wishart Q.
@@ -512,15 +518,28 @@ MCMC_block_function <- function(block) {
     mua <- colMeans(dat[, iX])
     pa <- stats::cov(dat[, iX])
   }
-  
-  if (length(iX.mod) == 1) {
-    mufa <- mean(dat[, iX.mod])
-    pfa <- stats::var(dat[, iX.mod])
+  # construct X.all object.
+  # NA only occurs when there is zero observation.
+  if (!any(is.na(block$data$y.censored))) {
+    H <- colSums(block$H)
+    obs.inds <- which(H == 1)
+    non.obs.inds <- which(H == 0)
+    X.all.inds <- H
+    X.all.inds[obs.inds] <- iX
+    X.all.inds[non.obs.inds] <- iX.mod[non.obs.inds]
+    mufa <- colMeans(dat[, X.all.inds])
+    pfa <- stats::cov(dat[, X.all.inds])
   } else {
     mufa <- colMeans(dat[, iX.mod])
     pfa <- stats::cov(dat[, iX.mod])
   }
-  
+  # if (length(iX.mod) == 1) {
+  #   mufa <- mean(dat[, iX.mod])
+  #   pfa <- stats::var(dat[, iX.mod])
+  # } else {
+  #   mufa <- colMeans(dat[, iX.mod])
+  #   pfa <- stats::cov(dat[, iX.mod])
+  # }
   #return values.
   block$update <- list(aq = aq, bq = bq, mua = mua, pa = pa, mufa = mufa, pfa = pfa)
   return(block)
