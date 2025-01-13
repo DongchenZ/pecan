@@ -136,7 +136,7 @@ rm.files <- function(folder.path, cores, only.nc) {
     test = foreach::foreach(file = folder.runs, 
                             .packages=c("Kendall"), 
                             .options.snow=opts) %dopar% {
-                              unlink(list.files(file, "*.nc", recursive = TRUE, full.names = TRUE))}
+                              unlink(list.files(file, "*.nc", recursive = TRUE, full.names = TRUE), recursive = T)}
   } else {
     test = foreach::foreach(file = folder.runs, 
                             .packages=c("Kendall"), 
