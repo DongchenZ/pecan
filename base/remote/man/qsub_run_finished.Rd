@@ -4,7 +4,7 @@
 \alias{qsub_run_finished}
 \title{Check if qsub run finished}
 \usage{
-qsub_run_finished(run, host, qstat, verbose = TRUE)
+qsub_run_finished(run, host, qstat)
 }
 \arguments{
 \item{run}{run ID, as an integer}
@@ -12,8 +12,6 @@ qsub_run_finished(run, host, qstat, verbose = TRUE)
 \item{host}{host structure to execute command on}
 
 \item{qstat}{(string) qstat command for checking job status}
-
-\item{verbose}{Boolean: determine if you want to print out the progress, default is TRUE.}
 }
 \value{
 \code{TRUE} if run is marked as DONE, otherwise FALSE.
