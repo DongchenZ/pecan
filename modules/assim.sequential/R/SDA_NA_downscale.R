@@ -84,26 +84,6 @@ Average.ERA5.2.GeoTIFF <- function (start.date, end.date, in.path, outdir) {
   return(file.path(outdir, paste0("ERA5_met_", lubridate::year(end.date), ".tiff")))
 }
 
-
-
-# assemble covariates from different spatial scales/resolutions and crs.
-# Here is an example of the `cov.tif.file.list` object:
-# cov.tif.file.list <- list(LC = list(dir = "/projectnb/dietzelab/dongchen/anchorSites/downscale/MODIS_NLCD_LC.tif",
-#                                     var.name = "LC"),
-#                           year_since_disturb = list(dir = "/projectnb/dietzelab/dongchen/anchorSites/downscale/MODIS_LC/outputs/age.tif",
-#                                                     var.name = "year_since_disturb"),
-#                           agb = list(dir = "/projectnb/dietzelab/dongchen/anchorSites/downscale/AGB/agb.tif",
-#                                      var.name = "agb"),
-#                           twi = list(dir = "/projectnb/dietzelab/dongchen/anchorSites/downscale/TWI/TWI_resample.tiff",
-#                                      var.name = "twi"),
-#                           met = list(dir = paths[i],
-#                                      var.name = c("temp", "prec", "srad", "vapr")),
-#                           soil = list(dir = "/projectnb/dietzelab/dongchen/anchorSites/downscale/SoilGrids.tif",
-#                                       var.name = c("PH", "N", "SOC", "Sand")))
-# This function helps to stack target data layers from various GeoTIFF maps to a single map 
-# cropped and projected to the `base.map`. It also enables the normalization feature to facilitate the ML process.
-
-
 #' @description
 #' This function helps to stack target data layers from various GeoTIFF maps (with different extents, CRS, and resolutions) to a single map.
 #' @title stack.covariates.2.geotiff
