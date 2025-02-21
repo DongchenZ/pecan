@@ -59,7 +59,8 @@ For more information about this file see also [Keep a Changelog](http://keepacha
 - Added GEDI AGB preparation workflow.
 - Added new feature of downloading datasets from the NASA DAAC ORNL database.
 - Extended downscale function and created 'downscale_hrly' so that it handles more frequent data
-- Added 'aggregate' as a new feature for downscaled data
+- Added 'aggregate' as a new feature for downscaled data.
+- Added downscale functions and scripts that apply to the North America SDA run.
 
 ### Fixed
 
