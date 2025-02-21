@@ -6,6 +6,7 @@
 \usage{
 \method{stack}{covariates.2.geotiff}(
   outdir,
+  year,
   base.map.dir,
   cov.tif.file.list,
   normalize = T,
@@ -14,6 +15,8 @@
 }
 \arguments{
 \item{outdir}{character: the output directory where the stacked GeoTIFF file will be generated.}
+
+\item{year}{numeric: the year of when the covariates are stacked.}
 
 \item{base.map.dir}{character: path to the GeoTIFF file within which the extents and CRS will be used to generate the final map.}
 
