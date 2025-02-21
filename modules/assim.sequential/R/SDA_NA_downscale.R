@@ -9,20 +9,15 @@
 #'
 #' @return character: path to the exported GeoTIFF file.
 #' 
-#' @examples
 #' @export
 #' @author Dongchen Zhang
 Average.ERA5.2.GeoTIFF <- function (start.date, end.date, in.path, outdir) {
   # open ERA5 nc file as geotiff format for referencing crs and ext.
   ERA5.tiff <- terra::rast(file.path(in.path, paste0("ERA5_", lubridate::year(start.date), ".nc")))
   dates <- seq(start.date, end.date, "1 year")
-  if (length(dates) < 2) {
-    PEcAn.logger::logger.info("There is no time range to be calculated!")
-    return(NA)
-  }
   # initialize final outcomes.
   temp.all <- precip.all <- srd.all <- dewpoint.all <- c()
-  for (i in 2:length(dates)) {
+  for (i in seq_along(dates)) {
     # initialize start and end dates for the current period
     if (i == 1) {
       start <- start.date
@@ -114,6 +109,7 @@ Average.ERA5.2.GeoTIFF <- function (start.date, end.date, in.path, outdir) {
 #' @title stack.covariates.2.geotiff
 #' 
 #' @param outdir character: the output directory where the stacked GeoTIFF file will be generated.
+#' @param year numeric: the year of when the covariates are stacked.
 #' @param base.map.dir character: path to the GeoTIFF file within which the extents and CRS will be used to generate the final map.
 #' @param cov.tif.file.list list: a list contains sub-lists with each including path to the corresponding map and the variables to be extracted (e.g., list(LC = list(dir = "path/to/landcover.tiff", var.name = "LC")).
 #' @param normalize boolean: decide if we want to normalize each data layer, the default is TRUE.
@@ -121,9 +117,10 @@ Average.ERA5.2.GeoTIFF <- function (start.date, end.date, in.path, outdir) {
 #'
 #' @return path to the exported GeoTIFF file.
 #' 
-#' @examples
+#' @export
+#' 
 #' @author Dongchen Zhang
-stack.covariates.2.geotiff <- function(outdir, base.map.dir, cov.tif.file.list, normalize = T, cores = parallel::detectCores()) {
+stack.covariates.2.geotiff <- function(outdir, year, base.map.dir, cov.tif.file.list, normalize = T, cores = parallel::detectCores()) {
   # create the folder if it doesn't exist.
   if (!file.exists(outdir)) {
     dir.create(outdir)
@@ -174,11 +171,11 @@ stack.covariates.2.geotiff <- function(outdir, base.map.dir, cov.tif.file.list, 
   # combine rasters.
   all.rast <- terra::rast(paths)
   # write all covariates into disk.
-  terra::writeRaster(all.rast, file.path(outdir, "covariates.tiff"), overwrite = T)
+  terra::writeRaster(all.rast, file.path(outdir, paste0("covariates_", year, ".tiff")), overwrite = T)
   # remove previous tiff files.
   unlink(paths)
   # return results.
-  return(file.path(outdir, "covariates.tiff"))
+  return(file.path(outdir, paste0("covariates_", year, ".tiff")))
 }
 
 #' @description
@@ -189,7 +186,6 @@ stack.covariates.2.geotiff <- function(outdir, base.map.dir, cov.tif.file.list, 
 #'
 #' @return terra spatial points object.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 pecan.settings.2.pts <- function(settings) {
   if (is.character(settings)) {
@@ -215,7 +211,6 @@ pecan.settings.2.pts <- function(settings) {
 #'
 #' @return list containing the data frame of covariates for vegetated pixels and the corresponding index of the pixels.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 stack.covariates.2.df <- function(rast.dir, cores = parallel::detectCores()) {
   # load maps.
@@ -273,7 +268,6 @@ stack.covariates.2.df <- function(rast.dir, cores = parallel::detectCores()) {
 #'
 #' @return matrix within which the first sets of columns contain values of state variables for each ensemble mebers of every site, and the rest columns contain the corresponding covariates.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 prepare.train.dat <- function(settings, analysis, covariates.dir, variable) {
   # convert settings into geospatial points.
@@ -305,7 +299,6 @@ prepare.train.dat <- function(settings, analysis, covariates.dir, variable) {
 #'
 #' @return list of trained models across ensemble members.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 parallel.rf.train <- function(full_data, cores = parallel::detectCores()) {
   # grab ensemble and predictor index.
@@ -358,7 +351,6 @@ parallel.rf.train <- function(full_data, cores = parallel::detectCores()) {
 #'
 #' @return paths to the ensemble downscaled maps.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 parallel.prediction <- function(base.map.dir, models, cov.vecs, non.na.inds, outdir, name, cores = parallel::detectCores()) {
   # load base map.
@@ -417,7 +409,6 @@ parallel.prediction <- function(base.map.dir, models, cov.vecs, non.na.inds, out
 #'
 #' @return paths to the ensemble downscaled maps.
 #' 
-#' @examples
 #' @author Dongchen Zhang
 downscale.rf.main <- function(settings, analysis, covariates.dir, time, variable, outdir, base.map.dir, cores = parallel::detectCores()) {
   # create folder specific for the time and carbon type.
@@ -479,7 +470,6 @@ downscale.rf.main <- function(settings, analysis, covariates.dir, time, variable
 #' 
 #' @param folder.path Character: physical path to which the job file is located.
 #' 
-#' @examples
 #' @export
 #' @author Dongchen Zhang
 downscale.qsub.main <- function(folder.path) {
